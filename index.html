@@ -28,6 +28,20 @@
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
 
+  <!-- One-Click Startup Overlay for Display Monitors -->
+  <div id="start-overlay" class="hidden fixed inset-0 bg-slate-950/98 z-[100] flex flex-col items-center justify-center p-6 text-center cursor-pointer" onclick="startDisplaySystem()">
+    <div class="bg-indigo-900/40 border-2 border-indigo-500 rounded-3xl p-10 max-w-md w-full shadow-2xl space-y-4">
+      <div class="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto text-white shadow-lg">
+        <i data-lucide="tv" class="w-8 h-8"></i>
+      </div>
+      <h2 class="text-2xl font-black text-white">SKRIN UTAMA SEDIA DIBAWAH</h2>
+      <p class="text-xs text-slate-300">Tekan di mana-mana sahaja untuk mengaktifkan audio suara dan skrin penuh.</p>
+      <button class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition">
+        KLIK UNTUK MULA (START DISPLAY)
+      </button>
+    </div>
+  </div>
+
   <!-- Header & Mode Navigation -->
   <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-50 px-4 py-3 flex flex-wrap items-center justify-between gap-3 shadow-md">
     <div class="flex items-center gap-3">
@@ -54,7 +68,7 @@
   </header>
 
   <!-- ================================================================= -->
-  <!-- VIEW 1: CALLER PANEL (DESK CONTROLLER WITH LIVE STATUS & HISTORY) -->
+  <!-- VIEW 1: CALLER PANEL -->
   <!-- ================================================================= -->
   <main id="view-caller" class="flex-1 p-4 md:p-6 max-w-5xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
     
@@ -88,7 +102,7 @@
         </select>
       </div>
 
-      <!-- Step 3: Ticket Entry (Fixed 0000 format) -->
+      <!-- Step 3: Ticket Entry -->
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="block text-xs font-bold text-slate-300 mb-1.5">Awalan (Prefix):</label>
@@ -102,13 +116,13 @@
 
       <!-- Action Buttons -->
       <div class="pt-2 space-y-2.5">
-        <button id="btn-panggil-repeat" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 transition active:scale-[0.98] text-sm">
-          <i data-lucide="volume-2" class="w-4 h-4"></i>
-          Panggil (Repeat)
-        </button>
         <button id="btn-panggil-next" class="w-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 transition active:scale-[0.98]">
           <i data-lucide="play-circle" class="w-5 h-5"></i>
           Panggil Seterusnya (+1)
+        </button>
+        <button id="btn-panggil-repeat" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 transition active:scale-[0.98] text-sm">
+          <i data-lucide="volume-2" class="w-4 h-4"></i>
+          Panggil Semula (Repeat)
         </button>
       </div>
     </div>
@@ -122,19 +136,16 @@
         </h3>
       </div>
 
-      <!-- Currently Called Badge Box -->
       <div class="bg-slate-950 border border-indigo-500/40 rounded-xl p-4 text-center">
         <div class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Nombor Aktif Terkini</div>
         <div id="caller-active-ticket" class="text-5xl font-black text-indigo-400 font-mono my-1">---</div>
         <div id="caller-active-room" class="text-xs text-amber-400 font-bold">Sedia...</div>
       </div>
 
-      <!-- History List -->
       <div class="flex-1 overflow-y-auto space-y-2 pr-1" id="caller-history-list">
         <div class="text-center text-xs text-slate-600 py-8">Tiada sejarah panggilan</div>
       </div>
     </div>
-
   </main>
 
   <!-- ================================================================= -->
@@ -142,7 +153,6 @@
   <!-- ================================================================= -->
   <main id="view-display" class="hidden flex-1 p-4 md:p-6 flex flex-col justify-between relative overflow-hidden">
     
-    <!-- Top Header & Monitor Selector Bar -->
     <div class="w-full flex flex-wrap justify-between items-center gap-3 bg-slate-900/90 backdrop-blur p-3.5 rounded-2xl border border-slate-800 shadow-lg">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-xs">
@@ -197,7 +207,7 @@
         </div>
       </div>
 
-      <!-- Side List: History of Recently Called Numbers (Right - 4 cols) -->
+      <!-- Side List: History (Right - 4 cols) -->
       <div class="lg:col-span-4 bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-2xl flex flex-col justify-between h-[420px] lg:h-auto">
         <div class="border-b border-slate-800 pb-3 flex items-center justify-between">
           <h3 class="font-extrabold text-sm text-slate-200 flex items-center gap-2">
@@ -234,7 +244,7 @@
   </main>
 
   <!-- ================================================================= -->
-  <!-- FIREBASE ENGINE & SCRIPT -->
+  <!-- SCRIPT ENGINE -->
   <!-- ================================================================= -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -336,7 +346,6 @@
       window.speechSynthesis.speak(utter);
     }
 
-    // Caller Trigger Function with 4-digit 0000 auto increment
     function triggerCall(isRepeat = false) {
       const monitorId = document.getElementById('caller-monitor-select').value;
       const roomName = document.getElementById('caller-room-select').value;
@@ -349,10 +358,8 @@
         currentNum += 1;
       }
 
-      // Format strictly to 4 digits (e.g. 0001, 0002, ... 0010)
       const paddedNum = String(currentNum).padStart(4, '0');
       numInput.value = paddedNum;
-
       const formattedTicket = `${prefix}${paddedNum}`;
 
       set(ref(db, `monitors/${monitorId}`), {
@@ -365,7 +372,6 @@
     document.getElementById('btn-panggil-next').addEventListener('click', () => triggerCall(false));
     document.getElementById('btn-panggil-repeat').addEventListener('click', () => triggerCall(true));
 
-    // Global Monitor Listener for both Display and Caller panels
     function initGlobalMonitorListener() {
       const monitorId = document.getElementById('caller-monitor-select').value;
       if (activeListener) off(activeListener);
@@ -377,11 +383,8 @@
         const data = snapshot.val();
         if (!data) return;
 
-        // Update Display Screen UI
         document.getElementById('display-ticket-number').innerText = data.currentTicket;
         document.getElementById('display-room-title').innerText = data.roomName;
-
-        // Update Caller Panel Live Status Box
         document.getElementById('caller-active-ticket').innerText = data.currentTicket;
         document.getElementById('caller-active-room').innerText = data.roomName;
 
@@ -405,9 +408,7 @@
     }
 
     function renderHistoryLists() {
-      // Render on Display Screen
       const displayContainer = document.getElementById('display-history-list');
-      // Render on Caller Panel
       const callerContainer = document.getElementById('caller-history-list');
 
       if (localHistory.length === 0) {
@@ -465,8 +466,39 @@
       }
     };
 
-    updateRoomDropdown();
-    initGlobalMonitorListener();
+    window.startDisplaySystem = function() {
+      document.getElementById('start-overlay').classList.add('hidden');
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+      playChime();
+    };
+
+    // Auto-detect URL parameters on startup for direct monitor opening
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const viewMode = urlParams.get('view');
+      const monitorId = urlParams.get('monitor');
+
+      updateRoomDropdown();
+
+      if (viewMode === 'display') {
+        switchMode('display');
+        if (monitorId) {
+          const displaySelect = document.getElementById('display-monitor-select');
+          if (displaySelect) {
+            displaySelect.value = monitorId;
+            document.getElementById('caller-monitor-select').value = monitorId;
+            updateRoomDropdown();
+          }
+        }
+        initGlobalMonitorListener();
+        // Show the one-click audio starter overlay for display monitors
+        document.getElementById('start-overlay').classList.remove('hidden');
+      } else {
+        initGlobalMonitorListener();
+      }
+    });
 
     setInterval(() => {
       const clock = document.getElementById('display-clock');
