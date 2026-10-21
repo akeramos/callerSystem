@@ -359,7 +359,7 @@
       await playChime();
 
       const spokenTicket = ticket.split('').map(c => c === '0' ? 'kosong' : c).join(' ');
-      const text = `Nombor giliran ${spokenTicket}, sila ke ${roomName}`;
+      const text = `${spokenTicket}, ${roomName}`;
 
       const utter = new SpeechSynthesisUtterance(text);
       utter.rate = 0.85;
