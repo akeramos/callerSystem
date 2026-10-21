@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QMS - Klinik Kesihatan Batu 9, Cheras</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(1.02); }
+    }
+    .animate-calling { animation: pulse-glow 1.2s infinite ease-in-out; }
+
+    @keyframes marquee {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+    .animate-marquee {
+      white-space: nowrap;
+      display: inline-block;
+      animation: marquee 20s linear infinite;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+  <!-- Header & Mode Navigation -->
+  <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-50 px-4 py-3 flex flex-wrap items-center justify-between gap-3 shadow-md">
+    <div class="flex items-center gap-3">
+      <div class="bg-gradient-to-tr from-indigo-600 to-violet-500 p-2 rounded-xl text-white shadow-lg shadow-indigo-500/20">
+        <i data-lucide="hospital" class="w-5 h-5"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-base tracking-wide text-white leading-tight">KK Batu 9, Cheras - QMS Pro</h1>
+        <p class="text-xs text-slate-400">Sistem Panggilan Giliran Multi-Skrin</p>
+      </div>
+    </div>
+
+    <!-- Mode Switcher -->
+    <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
+      <button id="btn-mode-caller" onclick="switchMode('caller')" class="px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 bg-indigo-600 text-white shadow-sm">
+        <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>
+        <span>Panel Pemanggil (Desk)</span>
+      </button>
+      <button id="btn-mode-display" onclick="switchMode('display')" class="px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-200">
+        <i data-lucide="tv" class="w-3.5 h-3.5"></i>
+        <span>Skrin Utama (Display)</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================================================================= -->
+  <!-- VIEW 1: CALLER PANEL (DESK CONTROLLER WITH LIVE STATUS & HISTORY) -->
+  <!-- ================================================================= -->
+  <main id="view-caller" class="flex-1 p-4 md:p-6 max-w-5xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+    
+    <!-- Left: Controller Form (7 cols) -->
+    <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5">
+      <div class="border-b border-slate-800 pb-3 flex justify-between items-center">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="sliders" class="w-5 h-5 text-indigo-400"></i>
+          Panel Kawalan Pemanggil
+        </h2>
+        <span class="text-xs bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2.5 py-1 rounded-full font-semibold">KK Batu 9</span>
+      </div>
+
+      <!-- Step 1: Select Target Monitor -->
+      <div>
+        <label class="block text-xs font-bold text-slate-300 mb-1.5">1. Pilih Skrin Monitor Sasaran:</label>
+        <select id="caller-monitor-select" onchange="updateRoomDropdown()" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-white font-bold focus:outline-none focus:border-indigo-500 text-sm">
+          <option value="monitor_1">Monitor 1 (Kaunter 1 - 5)</option>
+          <option value="monitor_2">Monitor 2 (Triage & Bilik 5 - 16)</option>
+          <option value="monitor_3">Monitor 3 (Triage & Bilik 5 - 16)</option>
+          <option value="monitor_4">Monitor 4 (Bilik 17 - 29 & Kabin TB)</option>
+          <option value="monitor_5">Monitor 5 (Triage MCH & Suntikan)</option>
+        </select>
+      </div>
+
+      <!-- Step 2: Select Room from Monitor Category -->
+      <div>
+        <label class="block text-xs font-bold text-slate-300 mb-1.5">2. Pilih Lokasi / Bilik Pemanggil:</label>
+        <select id="caller-room-select" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-indigo-300 font-bold focus:outline-none focus:border-indigo-500 text-sm">
+          <!-- Populated dynamically via JS -->
+        </select>
+      </div>
+
+      <!-- Step 3: Ticket Entry (Fixed 0000 format) -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1.5">Awalan (Prefix):</label>
+          <input type="text" id="caller-prefix" value="A" maxlength="3" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-center font-extrabold text-white uppercase focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1.5">Nombor Tiket (4 Digit):</label>
+          <input type="text" id="caller-number" value="0001" maxlength="4" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-center font-extrabold text-white font-mono focus:outline-none focus:border-indigo-500">
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="pt-2 space-y-2.5">
+        <button id="btn-panggil-repeat" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 transition active:scale-[0.98] text-sm">
+          <i data-lucide="volume-2" class="w-4 h-4"></i>
+          Panggil (Repeat)
+        </button>
+        <button id="btn-panggil-next" class="w-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 transition active:scale-[0.98]">
+          <i data-lucide="play-circle" class="w-5 h-5"></i>
+          Panggil Seterusnya (+1)
+        </button>
+      </div>
+    </div>
+
+    <!-- Right: Live Status & History for Caller (5 cols) -->
+    <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4 flex flex-col h-[480px]">
+      <div class="border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+          <i data-lucide="activity" class="w-4 h-4 text-emerald-400"></i>
+          Status Panggilan Semasa
+        </h3>
+      </div>
+
+      <!-- Currently Called Badge Box -->
+      <div class="bg-slate-950 border border-indigo-500/40 rounded-xl p-4 text-center">
+        <div class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Nombor Aktif Terkini</div>
+        <div id="caller-active-ticket" class="text-5xl font-black text-indigo-400 font-mono my-1">---</div>
+        <div id="caller-active-room" class="text-xs text-amber-400 font-bold">Sedia...</div>
+      </div>
+
+      <!-- History List -->
+      <div class="flex-1 overflow-y-auto space-y-2 pr-1" id="caller-history-list">
+        <div class="text-center text-xs text-slate-600 py-8">Tiada sejarah panggilan</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ================================================================= -->
+  <!-- VIEW 2: DISPLAY MONITOR VIEW -->
+  <!-- ================================================================= -->
+  <main id="view-display" class="hidden flex-1 p-4 md:p-6 flex flex-col justify-between relative overflow-hidden">
+    
+    <!-- Top Header & Monitor Selector Bar -->
+    <div class="w-full flex flex-wrap justify-between items-center gap-3 bg-slate-900/90 backdrop-blur p-3.5 rounded-2xl border border-slate-800 shadow-lg">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-xs">
+          KK
+        </div>
+        <div>
+          <h2 class="text-sm md:text-base font-extrabold text-white tracking-wide uppercase">KLINIK KESIHATAN BATU 9, CHERAS</h2>
+          <p class="text-[11px] text-slate-400 font-medium">Sistem Panggilan Giliran Pesakit</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-bold text-slate-400">Pilih Monitor:</label>
+          <select id="display-monitor-select" class="bg-slate-950 border border-indigo-500 text-indigo-300 font-bold px-3 py-1.5 rounded-lg text-xs focus:outline-none">
+            <option value="monitor_1">Monitor 1 (Kaunter)</option>
+            <option value="monitor_2">Monitor 2 (Bilik 5-16)</option>
+            <option value="monitor_3">Monitor 3 (Bilik 5-16)</option>
+            <option value="monitor_4">Monitor 4 (Bilik 17-29)</option>
+            <option value="monitor_5">Monitor 5 (MCH & Suntikan)</option>
+          </select>
+        </div>
+
+        <span id="voice-tag" class="text-[10px] text-slate-400 bg-slate-950 px-2 py-1 rounded border border-slate-800">Mencari Suara Rizwan...</span>
+
+        <button onclick="toggleFullScreen()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow">
+          <i data-lucide="maximize" class="w-3.5 h-3.5"></i> Skrin Penuh
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Screen Body -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 my-auto py-4">
+      
+      <!-- Current Active Call Card (Left - 8 cols) -->
+      <div id="display-card" class="lg:col-span-8 bg-slate-900/90 backdrop-blur-xl border-4 border-indigo-500/50 rounded-3xl p-6 md:p-10 text-center shadow-2xl flex flex-col justify-center items-center transition-all duration-300">
+        <div id="display-calling-badge" class="hidden inline-flex items-center gap-2 bg-emerald-500 text-slate-950 font-black px-4 py-1.5 rounded-full text-xs md:text-sm uppercase tracking-wider mb-2 animate-calling shadow-lg shadow-emerald-500/30">
+          <i data-lucide="bell-ring" class="w-4 h-4"></i> SEDANG DIPANGGIL
+        </div>
+
+        <div class="text-slate-400 text-xs font-extrabold uppercase tracking-widest mt-1">NOMBOR GILIRAN</div>
+
+        <div id="display-ticket-number" class="text-8xl md:text-[140px] font-black tracking-wider text-white my-2 leading-none drop-shadow-2xl font-mono">
+          ---
+        </div>
+
+        <div class="pt-6 border-t border-slate-800/80 w-full flex items-center justify-center gap-4">
+          <span class="text-slate-400 font-medium text-lg md:text-2xl">Sila Ke:</span>
+          <span id="display-room-title" class="text-2xl md:text-5xl font-extrabold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-6 py-2.5 rounded-2xl shadow-inner">
+            Sedia...
+          </span>
+        </div>
+      </div>
+
+      <!-- Side List: History of Recently Called Numbers (Right - 4 cols) -->
+      <div class="lg:col-span-4 bg-slate-900/80 border border-slate-800 rounded-3xl p-5 shadow-2xl flex flex-col justify-between h-[420px] lg:h-auto">
+        <div class="border-b border-slate-800 pb-3 flex items-center justify-between">
+          <h3 class="font-extrabold text-sm text-slate-200 flex items-center gap-2">
+            <i data-lucide="history" class="w-4 h-4 text-indigo-400"></i>
+            SENARAI PANGGILAN TERAKHIR
+          </h3>
+          <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700">Terkini</span>
+        </div>
+
+        <div id="display-history-list" class="flex-1 overflow-y-auto my-3 space-y-2.5 pr-1">
+          <div class="text-center text-xs text-slate-600 py-12">Belum ada sejarah panggilan</div>
+        </div>
+
+        <div class="pt-2 border-t border-slate-800 text-right text-[11px] text-slate-400 font-mono" id="display-clock">
+          00:00:00
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Marquee Ticker Footer -->
+    <footer class="w-full">
+      <div class="bg-slate-900/90 backdrop-blur rounded-2xl border border-slate-800 p-3 overflow-hidden flex items-center shadow-inner">
+        <span class="bg-indigo-600 text-white font-extrabold text-xs px-3 py-1 rounded-lg mr-3 shrink-0 flex items-center gap-1 shadow">
+          <i data-lucide="megaphone" class="w-3.5 h-3.5"></i> MAKLUMAT
+        </span>
+        <div class="overflow-hidden relative w-full">
+          <div class="animate-marquee font-bold text-xs md:text-sm text-slate-200">
+            Selamat Datang! SILA BERSABAR DAN TUNGGU NOMBOR PANGGILAN ANDA. TERIMA KASIH.
+          </div>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <!-- ================================================================= -->
+  <!-- FIREBASE ENGINE & SCRIPT -->
+  <!-- ================================================================= -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue, off } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB4umdue-DQLm5Q45Oasno1HUKDSzc_zuY",
+      authDomain: "qms-system-54061.firebaseapp.com",
+      databaseURL: "https://qms-system-54061-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "qms-system-54061",
+      storageBucket: "qms-system-54061.appspot.com",
+      messagingSenderId: "443757865201",
+      appId: "1:443757865201:web:95006ee689041586436150",
+      measurementId: "G-7GHLFTG010"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const ROOM_PRESETS = {
+      monitor_1: ["KAUNTER 1", "KAUNTER 2", "KAUNTER 3", "KAUNTER 4", "KAUNTER 5"],
+      monitor_2: ["TRIAGE 1A", "TRIAGE 1B", "BILIK 5", "BILIK 6", "BILIK 7", "BILIK 8", "BILIK 11", "BILIK 12", "BILIK 14", "BILIK 16"],
+      monitor_3: ["TRIAGE 1A", "TRIAGE 1B", "BILIK 5", "BILIK 6", "BILIK 7", "BILIK 8", "BILIK 11", "BILIK 12", "BILIK 14", "BILIK 16"],
+      monitor_4: ["BILIK 17", "BILIK 18", "BILIK 19", "BILIK 20", "BILIK 21", "BILIK 25", "BILIK 26", "BILIK 27", "BILIK 28", "BILIK 29", "KABIN TB"],
+      monitor_5: ["TRIAGE MCH", "BILIK SUNTIKAN"]
+    };
+
+    let activeListener = null;
+    let rizwanVoice = null;
+    let localHistory = [];
+
+    window.updateRoomDropdown = function() {
+      const selectedMonitor = document.getElementById('caller-monitor-select').value;
+      const roomSelect = document.getElementById('caller-room-select');
+      const rooms = ROOM_PRESETS[selectedMonitor] || [];
+
+      roomSelect.innerHTML = '';
+      rooms.forEach(room => {
+        const opt = document.createElement('option');
+        opt.value = room;
+        opt.textContent = room;
+        roomSelect.appendChild(opt);
+      });
+    };
+
+    function loadVoices() {
+      if (!('speechSynthesis' in window)) return;
+      const voices = window.speechSynthesis.getVoices();
+      rizwanVoice = voices.find(v => v.name.toLowerCase().includes('rizwan') || v.name.toLowerCase().includes('rizuan')) || voices.find(v => v.lang.toLowerCase().includes('ms'));
+
+      const tag = document.getElementById('voice-tag');
+      if (tag && rizwanVoice) {
+        tag.innerText = `Suara: ${rizwanVoice.name}`;
+        tag.className = "text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20 font-medium";
+      }
+    }
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+      loadVoices();
+    }
+
+    function playChime() {
+      return new Promise((resolve) => {
+        try {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          const ctx = new AudioContext();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          const now = ctx.currentTime;
+          osc.frequency.setValueAtTime(659.25, now);
+          osc.frequency.setValueAtTime(880.00, now + 0.25);
+          gain.gain.setValueAtTime(0, now);
+          gain.gain.linearRampToValueAtTime(0.3, now + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.85);
+          setTimeout(() => { ctx.close(); resolve(); }, 850);
+        } catch (e) { resolve(); }
+      });
+    }
+
+    async function speakMalay(ticket, roomName) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      await playChime();
+
+      const spokenTicket = ticket.split('').map(c => c === '0' ? 'kosong' : c).join(' ');
+      const text = `Nombor giliran ${spokenTicket}, sila ke ${roomName}`;
+
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.rate = 0.85;
+      utter.pitch = 1.0;
+      utter.lang = 'ms-MY';
+      if (rizwanVoice) utter.voice = rizwanVoice;
+      window.speechSynthesis.speak(utter);
+    }
+
+    // Caller Trigger Function with 4-digit 0000 auto increment
+    function triggerCall(isRepeat = false) {
+      const monitorId = document.getElementById('caller-monitor-select').value;
+      const roomName = document.getElementById('caller-room-select').value;
+      const prefix = document.getElementById('caller-prefix').value.toUpperCase() || 'A';
+      
+      const numInput = document.getElementById('caller-number');
+      let currentNum = parseInt(numInput.value, 10) || 1;
+
+      if (!isRepeat) {
+        currentNum += 1;
+      }
+
+      // Format strictly to 4 digits (e.g. 0001, 0002, ... 0010)
+      const paddedNum = String(currentNum).padStart(4, '0');
+      numInput.value = paddedNum;
+
+      const formattedTicket = `${prefix}${paddedNum}`;
+
+      set(ref(db, `monitors/${monitorId}`), {
+        roomName: roomName,
+        currentTicket: formattedTicket,
+        timestamp: Date.now()
+      });
+    }
+
+    document.getElementById('btn-panggil-next').addEventListener('click', () => triggerCall(false));
+    document.getElementById('btn-panggil-repeat').addEventListener('click', () => triggerCall(true));
+
+    // Global Monitor Listener for both Display and Caller panels
+    function initGlobalMonitorListener() {
+      const monitorId = document.getElementById('caller-monitor-select').value;
+      if (activeListener) off(activeListener);
+
+      activeListener = ref(db, `monitors/${monitorId}`);
+      localHistory = [];
+
+      onValue(activeListener, (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+
+        // Update Display Screen UI
+        document.getElementById('display-ticket-number').innerText = data.currentTicket;
+        document.getElementById('display-room-title').innerText = data.roomName;
+
+        // Update Caller Panel Live Status Box
+        document.getElementById('caller-active-ticket').innerText = data.currentTicket;
+        document.getElementById('caller-active-room').innerText = data.roomName;
+
+        const timeStr = new Date().toLocaleTimeString('ms-MY', { hour12: false });
+        localHistory.unshift({ ticket: data.currentTicket, room: data.roomName, time: timeStr });
+        if (localHistory.length > 8) localHistory.pop();
+
+        renderHistoryLists();
+
+        const card = document.getElementById('display-card');
+        const badge = document.getElementById('display-calling-badge');
+        card.classList.add('border-emerald-400', 'ring-4', 'ring-emerald-500/50');
+        badge.classList.remove('hidden');
+        setTimeout(() => {
+          card.classList.remove('border-emerald-400', 'ring-4', 'ring-emerald-500/50');
+          badge.classList.add('hidden');
+        }, 4000);
+
+        speakMalay(data.currentTicket, data.roomName);
+      });
+    }
+
+    function renderHistoryLists() {
+      // Render on Display Screen
+      const displayContainer = document.getElementById('display-history-list');
+      // Render on Caller Panel
+      const callerContainer = document.getElementById('caller-history-list');
+
+      if (localHistory.length === 0) {
+        const emptyHtml = `<div class="text-center text-xs text-slate-600 py-8">Tiada sejarah panggilan</div>`;
+        displayContainer.innerHTML = emptyHtml;
+        callerContainer.innerHTML = emptyHtml;
+        return;
+      }
+
+      const historyHtml = localHistory.map((item, idx) => `
+        <div class="bg-slate-950/80 border ${idx === 0 ? 'border-amber-500/50 bg-amber-500/10' : 'border-slate-800'} rounded-xl p-2.5 flex justify-between items-center transition">
+          <div>
+            <span class="font-black text-sm md:text-base ${idx === 0 ? 'text-amber-400' : 'text-white'} font-mono">${item.ticket}</span>
+            <span class="text-xs text-slate-300 ml-2 font-bold">${item.room}</span>
+          </div>
+          <span class="text-[10px] text-slate-500 font-mono">${item.time}</span>
+        </div>
+      `).join('');
+
+      displayContainer.innerHTML = historyHtml;
+      callerContainer.innerHTML = historyHtml;
+    }
+
+    document.getElementById('caller-monitor-select').addEventListener('change', initGlobalMonitorListener);
+    document.getElementById('display-monitor-select').addEventListener('change', function() {
+      document.getElementById('caller-monitor-select').value = this.value;
+      updateRoomDropdown();
+      initGlobalMonitorListener();
+    });
+
+    window.switchMode = function(mode) {
+      const vCaller = document.getElementById('view-caller');
+      const vDisplay = document.getElementById('view-display');
+      const btnC = document.getElementById('btn-mode-caller');
+      const btnD = document.getElementById('btn-mode-display');
+
+      if (mode === 'caller') {
+        vCaller.classList.remove('hidden');
+        vDisplay.classList.add('hidden');
+        btnC.className = "px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 bg-indigo-600 text-white shadow-sm";
+        btnD.className = "px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-200";
+      } else {
+        vCaller.classList.add('hidden');
+        vDisplay.classList.remove('hidden');
+        btnD.className = "px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 bg-indigo-600 text-white shadow-sm";
+        btnC.className = "px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-slate-400 hover:text-slate-200";
+      }
+    };
+
+    window.toggleFullScreen = function() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    };
+
+    updateRoomDropdown();
+    initGlobalMonitorListener();
+
+    setInterval(() => {
+      const clock = document.getElementById('display-clock');
+      if (clock) clock.innerText = new Date().toLocaleTimeString('ms-MY', { hour12: false });
+    }, 1000);
+
+    lucide.createIcons();
+    
+    // Automatically request full screen when clicking anywhere on the display screen
+document.getElementById('view-display').addEventListener('click', function() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(err => {
+      console.log("Full screen prevented by browser policy");
+    });
+  }
+});
+  </script>
+</body>
+</html>
