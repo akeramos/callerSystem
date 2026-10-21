@@ -332,6 +332,13 @@
 
     async function speakMalay(ticket, roomName) {
       if (!('speechSynthesis' in window)) return;
+
+      // GUARD: Do NOT play audio or chime on the Caller Panel view!
+      const callerPanel = document.getElementById('view-caller');
+      if (callerPanel && !callerPanel.classList.contains('hidden')) {
+        return; 
+      }
+
       window.speechSynthesis.cancel();
       await playChime();
 
@@ -474,7 +481,6 @@
       playChime();
     };
 
-    // Auto-detect URL parameters on startup for direct monitor opening
     window.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
       const viewMode = urlParams.get('view');
@@ -493,7 +499,6 @@
           }
         }
         initGlobalMonitorListener();
-        // Show the one-click audio starter overlay for display monitors
         document.getElementById('start-overlay').classList.remove('hidden');
       } else {
         initGlobalMonitorListener();
@@ -506,8 +511,8 @@
     }, 1000);
 
     lucide.createIcons();
-    
-    // Automatically request full screen when clicking anywhere on the display screen
+
+ // Automatically request full screen when clicking anywhere on the display screen
 document.getElementById('view-display').addEventListener('click', function() {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen().catch(err => {
